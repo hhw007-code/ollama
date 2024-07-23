@@ -5,6 +5,7 @@ ARG CUDA_V11_ARCHITECTURES="50;52;53;60;61;62;70;72;75;80;86"
 ARG CUDA_VERSION_12=12.4.0
 ARG CUDA_V12_ARCHITECTURES="60;61;62;70;72;75;80;86;87;89;90;90a"
 ARG ROCM_VERSION=6.1.2
+ARG ASCEND_VERSION=24.0.RC1-openeuler20.03
 ARG JETPACK_6=r36.2.0
 ARG JETPACK_5=r35.4.1
 
@@ -133,6 +134,15 @@ RUN --mount=type=cache,target=/root/.ccache \
         DIST_LIB_DIR=/go/src/github.com/ollama/ollama/dist/linux-arm64-jetpack6/lib/ollama \
         DIST_GPU_RUNNER_DEPS_DIR=/go/src/github.com/ollama/ollama/dist/linux-arm64-jetpack6/lib/ollama/cuda_jetpack6
 
+FROM --platform=linux/arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/ascend-infer:${ASCEND_VERSION} AS ascend-build-arm64
+ARG CMAKE_VERSION
+COPY ./scripts/rh_linux_deps.sh /
+RUN CMAKE_VERSION=${CMAKE_VERSION} sh /rh_linux_deps.sh
+ENV PATH /opt/rh/gcc-toolset-10/root/usr/bin:$PATH
+COPY --from=llm-code / /go/src/github.com/ollama/ollama/
+WORKDIR /go/src/github.com/ollama/ollama/llm/generate
+ARG CGO_CFLAGS
+RUN OLLAMA_SKIP_STATIC_GENERATE=1 OLLAMA_SKIP_CPU_GENERATE=1 sh gen_linux.sh
 
 # Intermediate stages used for ./scripts/build_linux.sh
 FROM --platform=linux/amd64 centos:7 AS builder-amd64
