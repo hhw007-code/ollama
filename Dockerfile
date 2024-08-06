@@ -134,7 +134,7 @@ RUN --mount=type=cache,target=/root/.ccache \
         DIST_LIB_DIR=/go/src/github.com/ollama/ollama/dist/linux-arm64-jetpack6/lib/ollama \
         DIST_GPU_RUNNER_DEPS_DIR=/go/src/github.com/ollama/ollama/dist/linux-arm64-jetpack6/lib/ollama/cuda_jetpack6
 
-FROM --platform=linux/arm64 swr.cn-south-1.myhuaweicloud.com/ascendhub/ascend-infer:${ASCEND_VERSION} AS ascend-build-arm64
+FROM --platform=linux/arm64 cosdt/cann:${ASCEND_VERSION} AS ascend-build-arm64
 ARG CMAKE_VERSION
 COPY ./scripts/rh_linux_deps.sh /
 RUN CMAKE_VERSION=${CMAKE_VERSION} sh /rh_linux_deps.sh
@@ -219,6 +219,7 @@ RUN --mount=type=cache,target=/root/.ccache \
 FROM --platform=linux/arm64 builder-arm64 AS container-build-arm64
 WORKDIR /go/src/github.com/ollama/ollama
 COPY . .
+COPY --from=ascend-build-arm64 /go/src/github.com/ollama/ollama/llm/build/linux/ llm/build/linux/
 ARG GOFLAGS
 ARG CGO_CFLAGS
 RUN --mount=type=cache,target=/root/.ccache \
