@@ -601,6 +601,8 @@ func (runner *runnerRef) needsReload(ctx context.Context, req *LlmRequest) bool 
 	if !reflect.DeepEqual(runner.model.AdapterPaths, req.model.AdapterPaths) || // have the adapters changed?
 		!reflect.DeepEqual(runner.model.ProjectorPaths, req.model.ProjectorPaths) || // have the projectors changed?
 		!reflect.DeepEqual(optsExisting, optsNew) || // have the runner options changed?
+		!reflect.DeepEqual(runner.model.ControlVectorPaths, req.model.ControlVectorPaths) || // have the control vectors changed?
+		!reflect.DeepEqual(runner.ControlStrength, req.opts.ControlStrength) || // have the control strength changed?
 		runner.llama.Ping(ctx) != nil {
 		return true
 	}
