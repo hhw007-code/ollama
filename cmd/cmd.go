@@ -239,6 +239,7 @@ func loadOrUnloadModel(cmd *cobra.Command, opts *runOptions) error {
 
 	req := &api.GenerateRequest{
 		Model:     opts.Model,
+		Options:   opts.Options,
 		KeepAlive: opts.KeepAlive,
 	}
 
@@ -261,10 +262,23 @@ func StopHandler(cmd *cobra.Command, args []string) error {
 func RunHandler(cmd *cobra.Command, args []string) error {
 	interactive := true
 
+	rawParams, err := cmd.Flags().GetStringToString("parameter")
+	if err != nil {
+		return err
+	}
+	paramSingletons := make(map[string][]string)
+	for key, rawParam := range rawParams {
+		paramSingletons[key] = []string{rawParam}
+	}
+	parameters, err := api.FormatParams(paramSingletons)
+	if err != nil {
+		return err
+	}
+
 	opts := runOptions{
 		Model:    args[0],
 		WordWrap: os.Getenv("TERM") == "xterm-256color",
-		Options:  map[string]interface{}{},
+		Options:  parameters,
 	}
 
 	format, err := cmd.Flags().GetString("format")
@@ -1206,6 +1220,7 @@ func NewCLI() *cobra.Command {
 	runCmd.Flags().Bool("nowordwrap", false, "Don't wrap words to the next line automatically")
 	runCmd.Flags().String("format", "", "Response format (e.g. json)")
 	runCmd.Flags().String("system", "", "Set system message")
+	runCmd.Flags().StringToString("parameter", map[string]string{}, "Set a parameter (e.g. num_ctx:4096)")
 
 	stopCmd := &cobra.Command{
 		Use:     "stop MODEL",
